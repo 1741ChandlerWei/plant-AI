@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三一學院</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1c1c14; --paper: #f4efe4; --fog: #ebe5d6;
+  --border: #c8bfa8; --moss: #3d5c2e; --moss-l: #6a8f52;
+}
+body { font-family: 'Noto Serif TC', serif; background: var(--paper); color: var(--ink); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+.header { padding: 12px 20px; border-bottom: 2px solid var(--ink); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.header h1 { font-size: 1rem; font-weight: 900; letter-spacing: .1em; }
+.header p { font-family: 'DM Mono', monospace; font-size: .58rem; color: var(--moss); letter-spacing: .12em; margin-top: 2px; }
+.header-right { text-align: right; }
+#sessionBadge { font-family: 'DM Mono', monospace; font-size: .58rem; color: var(--border); }
+#memoryBadge { font-family: 'DM Mono', monospace; font-size: .55rem; color: var(--moss-l); margin-top: 2px; }
+
+.members { display: flex; border-bottom: 1px solid var(--border); background: var(--fog); flex-shrink: 0; overflow-x: auto; }
+.chip { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-right: 1px solid var(--border); white-space: nowrap; transition: background .2s; }
+.chip.on { background: #fff; }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+.chip .rl { font-size: .72rem; font-weight: 700; }
+
+.feed { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 2px; }
+.feed::-webkit-scrollbar { width: 3px; } .feed::-webkit-scrollbar-thumb { background: var(--border); }
+
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; opacity: .35; }
+.empty div:first-child { font-size: 2.5rem; }
+.empty div:last-child { font-family: 'DM Mono', monospace; font-size: .65rem; letter-spacing: .1em; }
+
+.divider { display: flex; align-items: center; gap: 10px; padding: 14px 0 6px; opacity: .4; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.divider span { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .1em; white-space: nowrap; }
+
+.memory-card { border-left: 3px solid var(--moss-l); padding: 10px 14px; background: #f0f5ec; margin: 8px 0; animation: up .3s ease; }
+.memory-label { font-family: 'DM Mono', monospace; font-size: .55rem; color: var(--moss); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+.memory-item { font-size: .75rem; line-height: 1.7; color: #3a3a2a; margin-bottom: 4px; }
+.memory-item span { font-weight: 700; color: var(--moss); }
+
+.q-row { display: flex; justify-content: flex-end; padding: 10px 0; animation: pop .3s ease; }
+.q-bubble { background: var(--ink); color: var(--paper); padding: 9px 14px; font-size: .82rem; line-height: 1.6; max-width: 72%; }
+
+.msg-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--fog); animation: up .35s ease; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .9rem; flex-shrink: 0; border: 1.5px solid; }
+.msg-body { flex: 1; }
+.msg-head { display: flex; gap: 6px; align-items: baseline; margin-bottom: 4px; }
+.msg-role { font-size: .75rem; font-weight: 700; }
+.msg-tag { font-family: 'DM Mono', monospace; font-size: .58rem; color: #999; }
+.msg-text { font-size: .82rem; line-height: 1.75; color: #2a2a1c; white-space: pre-wrap; }
+
+.dots { display: flex; gap: 3px; align-items: center; padding: 6px 0; }
+.dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--moss-l); animation: blink 1.1s infinite; }
+.dots span:nth-child(2) { animation-delay: .18s; }
+.dots span:nth-child(3) { animation-delay: .36s; }
+
+.summary { margin: 12px 0 4px; border: 1.5px solid var(--ink); padding: 14px 16px; background: #fff; animation: up .4s ease; }
+.summary-label { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .12em; color: var(--moss); text-transform: uppercase; margin-bottom: 8px; }
+.summary-text { font-size: .82rem; line-height: 1.8; white-space: pre-wrap; }
+
+.input-area { border-top: 2px solid var(--ink); padding: 12px 20px; background: var(--paper); flex-shrink: 0; }
+.input-label { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .1em; color: var(--moss); margin-bottom: 6px; text-transform: uppercase; }
+.input-row { display: flex; gap: 8px; align-items: flex-end; }
+textarea { flex: 1; background: #fff; border: 1.5px solid var(--border); padding: 8px 12px; font-family: 'Noto Serif TC', serif; font-size: .82rem; color: var(--ink); resize: none; outline: none; line-height: 1.55; max-height: 90px; transition: border-color .2s; }
+textarea:focus { border-color: var(--ink); }
+textarea::placeholder { color: #bbb; }
+textarea:disabled { opacity: .5; }
+button { background: var(--ink); color: var(--paper); border: none; padding: 9px 16px; font-family: 'DM Mono', monospace; font-size: .65rem; letter-spacing: .08em; cursor: pointer; height: 38px; white-space: nowrap; transition: background .2s, opacity .2s; }
+button:hover:not(:disabled) { background: var(--moss); }
+button:disabled { opacity: .35; cursor: not-allowed; }
+.status { font-family: 'DM Mono', monospace; font-size: .58rem; color: var(--moss); letter-spacing: .08em; min-height: 14px; margin-top: 5px; }
+
+@keyframes pop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+@keyframes up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes blink { 0%,80%,100% { opacity: .3; transform: scale(1); } 40% { opacity: 1; transform: scale(1.3); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div><h1>三一學院</h1><p>根莖葉 · 參謀室</p></div>
+  <div class="header-right">
+    <div id="sessionBadge">SESSION #0</div>
+    <div id="memoryBadge">載入記憶中...</div>
+  </div>
+</div>
+<div class="members" id="membersBar"></div>
+<div class="feed" id="feed">
+  <div class="empty" id="emptyState"><div>🌿</div><div>載入過去討論記錄中...</div></div>
+</div>
+<div class="input-area">
+  <div class="input-label">向董事會提問</div>
+  <div class="input-row">
+    <textarea id="qInput" rows="2" placeholder="例：下半年應該主打哪個銷售管道？鹿角蕨如何提高利潤？" disabled></textarea>
+    <button id="sendBtn" onclick="go()" disabled>開會 →</button>
+  </div>
+  <div class="status" id="status">載入過去討論記錄...</div>
+</div>
+
+<script>
+const SUPA_URL = 'https://edvklxnzhuhmijdwyzrl.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkdmtseG56aHVobWlqZHd5enJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2OTE4MTQsImV4cCI6MjA5MzI2NzgxNH0.65Vf-XUlPZmhc-LWqzXq55bpR6RcG8iqNybf_bqyd60';
+
+const M = [
+  { id:'ceo', role:'執行長', tag:'CEO', emoji:'🎯', color:'#3d5c2e', bg:'#e6f0dc',
+    sys:'你是根莖葉植物工作室的執行長。策略思考，關注整體方向與品牌定位。繁體中文，語氣決斷。150字內。' },
+  { id:'cmo', role:'行銷長', tag:'CMO', emoji:'📣', color:'#a84e2a', bg:'#f5e4dc',
+    sys:'你是根莖葉植物工作室的行銷長。創意導向，關注IG/FB社群與內容策略。繁體中文，語氣熱情。150字內。' },
+  { id:'coo', role:'營運長', tag:'COO', emoji:'⚙️', color:'#2e4a6e', bg:'#dce8f5',
+    sys:'你是根莖葉植物工作室的營運長。關注執行可行性、流程與人力（員工：Quang、小幫手）。繁體中文，語氣直接。150字內。' },
+  { id:'cfo', role:'財務長', tag:'CFO', emoji:'📊', color:'#b8922a', bg:'#f5eed8',
+    sys:'你是根莖葉植物工作室的財務長。關注定價、利潤、ROI與財務風險。繁體中文，語氣理性謹慎。150字內。' },
+  { id:'cpo', role:'產品長', tag:'CPO', emoji:'🌱', color:'#2a6e5a', bg:'#daf0ea',
+    sys:'你是根莖葉植物工作室的產品長，專注鹿角蕨（staghorn fern）與特殊品種。關注產品、品種、顧客體驗。繁體中文，語氣充滿熱情。150字內。' },
+];
+const CTX = '根莖葉（Gốc Thân Lá）是位於越南的植物工作室，專注鹿角蕨（staghorn fern）及特殊植物品種銷售。老闆 Chandler Wei，員工有 Quang 和小幫手。多地點銷售，自建 POS 系統。';
+
+let running = false, sNum = 0;
+let pastMemory = []; // loaded from Supabase
+
+// Render members
+const bar = document.getElementById('membersBar');
+M.forEach(m => {
+  bar.innerHTML += `<div class="chip" id="c-${m.id}"><span>${m.emoji}</span><div class="dot" style="background:${m.color}"></div><span class="rl" style="color:${m.color}">${m.role}</span></div>`;
+});
+
+function speak(id) {
+  M.forEach(m => document.getElementById('c-'+m.id).classList.remove('on'));
+  if (id) document.getElementById('c-'+id)?.classList.add('on');
+}
+function setStatus(t) { document.getElementById('status').textContent = t; }
+
+function addEl(html) {
+  const feed = document.getElementById('feed');
+  const empty = document.getElementById('emptyState');
+  if (empty) empty.remove();
+  feed.insertAdjacentHTML('beforeend', html);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+// Supabase helpers
+async function supaFetch(path, opts={}) {
+  const res = await fetch(SUPA_URL + path, {
+    ...opts,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+      ...(opts.headers||{})
+    }
+  });
+  return res;
+}
+
+async function loadMemory() {
+  try {
+    const res = await supaFetch('/rest/v1/board_memory?select=question,summary,created_at&order=created_at.desc&limit=5');
+    if (!res.ok) throw new Error('load failed');
+    const data = await res.json();
+    pastMemory = data.reverse(); // oldest first
+
+    const feed = document.getElementById('feed');
+    const empty = document.getElementById('emptyState');
+
+    if (pastMemory.length === 0) {
+      if (empty) empty.querySelector('div:last-child').textContent = '提出商業問題，董事會開始討論';
+      document.getElementById('memoryBadge').textContent = '無過去記錄';
+    } else {
+      if (empty) empty.remove();
+      // Show memory summary
+      const items = pastMemory.map(m => {
+        const date = new Date(m.created_at).toLocaleDateString('zh-TW');
+        return `<div class="memory-item"><span>${date}</span>　${esc(m.question)}</div>`;
+      }).join('');
+      feed.insertAdjacentHTML('beforeend', `
+        <div class="memory-card">
+          <div class="memory-label">📚 過去 ${pastMemory.length} 次討論記錄（董事們記得這些）</div>
+          ${items}
+        </div>`);
+      feed.scrollTop = feed.scrollHeight;
+      document.getElementById('memoryBadge').textContent = `記憶：${pastMemory.length} 次會議`;
+    }
+  } catch(e) {
+    document.getElementById('memoryBadge').textContent = '記憶載入失敗';
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.querySelector('div:last-child').textContent = '提出商業問題，董事會開始討論';
+  }
+
+  // Enable input
+  document.getElementById('qInput').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  setStatus('');
+}
+
+async function saveMemory(question, summary) {
+  try {
+    await supaFetch('/rest/v1/board_memory', {
+      method: 'POST',
+      body: JSON.stringify({ question, summary })
+    });
+  } catch(e) {
+    console.warn('save memory failed', e);
+  }
+}
+
+function addTyping(m) {
+  addEl(`<div class="msg-row" id="typing">
+    <div class="avatar" style="background:${m.bg};border-color:${m.color};color:${m.color}">${m.emoji}</div>
+    <div class="msg-body">
+      <div class="msg-head"><span class="msg-role" style="color:${m.color}">${m.role}</span><span class="msg-tag">${m.tag}</span></div>
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div></div>`);
+}
+
+function replaceTyping(text) {
+  const el = document.getElementById('typing');
+  if (el) {
+    el.removeAttribute('id');
+    el.querySelector('.dots').outerHTML = `<div class="msg-text">${text}</div>`;
+  }
+}
+
+async function api(sys, prompt) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:sys, messages:[{role:'user',content:prompt}] })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || 'error');
+  return d.content[0].text;
+}
+
+async function go() {
+  if (running) return;
+  const ta = document.getElementById('qInput');
+  const q = ta.value.trim();
+  if (!q) return;
+  running = true; ta.disabled = true; document.getElementById('sendBtn').disabled = true; ta.value = '';
+
+  sNum++;
+  document.getElementById('sessionBadge').textContent = `SESSION #${sNum}`;
+  addEl(`<div class="divider"><span>第 ${sNum} 次會議</span></div>`);
+  addEl(`<div class="q-row"><div class="q-bubble">${esc(q)}</div></div>`);
+
+  // Build long-term memory context from Supabase
+  const longTermCtx = pastMemory.length > 0
+    ? '\n\n【過去討論記錄（長期記憶）】\n' + pastMemory.slice(-3).map(m =>
+        `問題：${m.question}\n結論：${m.summary}`
+      ).join('\n\n')
+    : '';
+
+  const roundReplies = [];
+
+  for (const m of M) {
+    speak(m.id);
+    setStatus(`${m.role} 正在思考...`);
+    addTyping(m);
+
+    const prev = roundReplies.length ? '\n\n本次其他成員發言：\n' + roundReplies.map(x=>`${x.role}：${x.t}`).join('\n\n') : '';
+    const prompt = `${CTX}${longTermCtx}\n\n本次討論題目：${q}${prev}\n\n請以你的角色立場發表意見。`;
+
+    try {
+      const reply = await api(m.sys, prompt);
+      replaceTyping(esc(reply).replace(/\n/g,'<br>'));
+      roundReplies.push({ role: m.role, t: reply });
+    } catch(e) {
+      replaceTyping(`⚠️ ${esc(e.message)}`);
+    }
+    await new Promise(r=>setTimeout(r,200));
+  }
+
+  // Summary
+  setStatus('整合共識中...');
+  let summaryText = '';
+  try {
+    summaryText = await api(
+      '你是執行長，整合董事會討論，用繁體中文條列3-5個具體行動項目。簡潔。',
+      `題目：${q}\n\n討論：\n${roundReplies.map(x=>`${x.role}：${x.t}`).join('\n\n')}\n\n行動建議：`
+    );
+    addEl(`<div class="summary"><div class="summary-label">📋 董事會共識與行動建議</div><div class="summary-text">${esc(summaryText)}</div></div>`);
+  } catch(e) {}
+
+  // Save to Supabase
+  if (summaryText) {
+    setStatus('儲存記憶中...');
+    await saveMemory(q, summaryText);
+    pastMemory.push({ question: q, summary: summaryText, created_at: new Date().toISOString() });
+    document.getElementById('memoryBadge').textContent = `記憶：${pastMemory.length} 次會議`;
+  }
+
+  speak(null);
+  setStatus(`第 ${sNum} 次會議結束 · 已儲存記憶 · 可繼續提問`);
+  running = false; ta.disabled = false; document.getElementById('sendBtn').disabled = false; ta.focus();
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.getElementById('qInput').addEventListener('keydown', e => {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); go(); }
+});
+
+// Load memory on start
+loadMemory();
+</script>
+</body>
+</html>
