@@ -158,7 +158,8 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 <div id="pw-gate">
   <h2>三一學院</h2>
   <p>TRINITY ACADEMY · PRIVATE ACCESS</p>
-  <input id="pw-input" type="password" placeholder="輸入密碼" autocomplete="off" />
+  <input id="pw-user" type="text" placeholder="帳號" autocomplete="username" />
+  <input id="pw-input" type="password" placeholder="密碼" autocomplete="current-password" onkeydown="if(event.key==='Enter')checkPw()" />
   <div id="pw-err"></div>
   <button id="pw-btn" onclick="checkPw()">進入 →</button>
 </div>
@@ -537,23 +538,35 @@ loadMemory();
 
 // --- password gate ---
 (function() {
-  const PASS = 'pledge1741';
-  const KEY = 'gtl_auth';
-  const gate = document.getElementById('pw-gate');
-  const input = document.getElementById('pw-input');
-  if (sessionStorage.getItem(KEY) === '1') { gate.style.display = 'none'; return; }
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') checkPw(); });
+  if (sessionStorage.getItem('gtl_auth') === '1') {
+    document.getElementById('pw-gate').style.display = 'none';
+  }
 })();
 
-function checkPw() {
-  const input = document.getElementById('pw-input');
-  if (input.value === 'pledge1741') {
-    sessionStorage.setItem('gtl_auth', '1');
-    document.getElementById('pw-gate').style.display = 'none';
-  } else {
-    document.getElementById('pw-err').textContent = '密碼錯誤';
-    input.value = '';
-    input.focus();
+async function checkPw() {
+  const u = document.getElementById('pw-user').value.trim();
+  const p = document.getElementById('pw-input').value;
+  const errEl = document.getElementById('pw-err');
+  errEl.textContent = '驗證中...';
+  try {
+    const r = await fetch('/api/auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      sessionStorage.setItem('gtl_auth', '1');
+      document.getElementById('pw-gate').style.display = 'none';
+      errEl.textContent = '';
+    } else {
+      errEl.textContent = d.error || '帳號或密碼錯誤';
+      document.getElementById('pw-input').value = '';
+      document.getElementById('pw-input').focus();
+    }
+  } catch(e) {
+    errEl.textContent = '連線錯誤';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
   }
 }
 </script>
